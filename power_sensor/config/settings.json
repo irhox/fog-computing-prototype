@@ -1,0 +1,23 @@
+{
+    "BROKER_URL": "mqtt.eclipseprojects.io",
+    "BROKER_PORT": 1883,
+    "TOPICS": [
+      {
+        "TYPE": "single",
+        "PREFIX": "power",
+        "TIME_INTERVAL": 1,
+        "DATA": [
+            {
+                "NAME": "power_in_volts",
+                "TYPE": "math_expression",
+                "RETAIN_PROBABILITY": 0.1,
+                "MATH_EXPRESSION": "10000 * (math.sin(x) + 1) / 2 + 5000",
+                "INTERVAL_START": 0,
+                "INTERVAL_END": 6.28319,
+                "MIN_DELTA": 0.1,
+                "MAX_DELTA": 0.2
+            }
+        ]
+      }
+    ]
+}
