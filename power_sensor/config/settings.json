@@ -5,7 +5,7 @@
       {
         "TYPE": "single",
         "PREFIX": "power",
-        "TIME_INTERVAL": 1,
+        "TIME_INTERVAL": 2,
         "DATA": [
             {
                 "NAME": "power_in_volts",
