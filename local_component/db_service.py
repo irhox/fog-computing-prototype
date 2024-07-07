@@ -1,28 +1,47 @@
 from fuel_data import FuelData
 from aggregated_data import AggregatedData
 from power_data import PowerData
-
-def create_fuel_data(cursor, fuel_data: FuelData):
-    cursor.execute("INSERT INTO public.fuel_data(fuel_level) VALUES (%s);", fuel_data.fuel_level)
-    print("Fuel data is successfully created.")
-
-def create_power_data(cursor, power_data: PowerData):
-    cursor.execute("INSERT INTO public.power_data(power_in_volts) VALUES (%s);", power_data.power_in_volts)
-    print("Power data is successfully created.")
-
-def save_aggregated_data(cursor, aggregated_data: AggregatedData):
-    aggregated_data.status = "CREATED"
-    cursor.execute("INSERT INTO public.aggregated_data(average_fuel_level, average_power_level, start_fuel_timestamp, end_fuel_timestamp, start_power_timestamp, end_power_timestamp, status) "
-                   "VALUES(%s, %s, %s, %s, %s, %s, %s);",
-                   (aggregated_data.average_fuel_level,
-                    aggregated_data.average_power_level,
-                    aggregated_data.start_fuel_timestamp,
-                    aggregated_data.end_fuel_timestamp,
-                    aggregated_data.start_power_timestamp,
-                    aggregated_data.end_power_timestamp,
-                    aggregated_data.status
-                    )
-                   )
-    print("Saved aggregated data to db.")
+import psycopg
+import os
+from dotenv import load_dotenv
 
 
+# Database Manager Class
+
+class DatabaseManager:
+
+    def __init__(self):
+        load_dotenv()
+        self.conn = psycopg.connect(
+            dbname=os.getenv('DB_NAME'),
+            user=os.getenv('DB_USER'),
+            password=os.getenv('DB_PASSWORD'),
+            host=os.getenv('DB_HOST'),
+            port=os.getenv('DB_PORT'))
+        self.cur = self.conn.cursor()
+
+    def add_power_record(self, arg:float):
+        self.cur.execute("INSERT INTO public.power_data(power_in_volts) VALUES (%(volts)s);", {"volts": arg})
+        self.conn.commit()
+
+    def add_fuel_record(self, arg:float):
+        self.cur.execute("INSERT INTO public.fuel_data(fuel_level) VALUES (%(fuel)s);", {"fuel": arg})
+        self.conn.commit()
+
+    def add_aggregated_data_record(self, aggregated_data:AggregatedData):
+        self.cur.execute("INSERT INTO public.aggregated_data(average_fuel_level, average_power_level, start_fuel_timestamp, end_fuel_timestamp, start_power_timestamp, end_power_timestamp, status) "
+        "VALUES(%(fuel)s, %(power)s, %(startf)s, %(endf)s, %(startp)s, %(endp)s, %(status)s);",
+        {
+            "fuel": aggregated_data.average_fuel_level,
+            "power": aggregated_data.average_power_level,
+            "startf": aggregated_data.start_fuel_timestamp,
+            "endf": aggregated_data.end_fuel_timestamp,
+            "startp": aggregated_data.start_power_timestamp,
+            "endp": aggregated_data.end_power_timestamp,
+            "status": aggregated_data.status
+        })
+        self.conn.commit()
+
+    def __exit__(self):
+        self.cur.close()
+        self.conn.close()
