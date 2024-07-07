@@ -1,13 +1,9 @@
-from fuel_data import FuelData
 from aggregated_data import AggregatedData
-from power_data import PowerData
 import psycopg
 import os
 from dotenv import load_dotenv
 
-
 # Database Manager Class
-
 class DatabaseManager:
 
     def __init__(self):
@@ -28,7 +24,8 @@ class DatabaseManager:
         self.cur.execute("INSERT INTO public.fuel_data(fuel_level) VALUES (%(fuel)s);", {"fuel": arg})
         self.conn.commit()
 
-    def add_aggregated_data_record(self, aggregated_data:AggregatedData):
+    def add_aggregated_data_record(self, fuel_data_array: [], power_data_array:[], status):
+        aggregated_data = AggregatedData(fuel_data_array, power_data_array, status)
         self.cur.execute("INSERT INTO public.aggregated_data(average_fuel_level, average_power_level, start_fuel_timestamp, end_fuel_timestamp, start_power_timestamp, end_power_timestamp, status) "
         "VALUES(%(fuel)s, %(power)s, %(startf)s, %(endf)s, %(startp)s, %(endp)s, %(status)s);",
         {
