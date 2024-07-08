@@ -1,14 +1,4 @@
-from dataclasses import dataclass
 import sqlite3
-
-
-@dataclass
-class SensorData:
-    average_fuel_level: float
-    average_power_level: float
-    start_timestamp: str
-    end_timestamp: str
-    status: str
 
 
 def create_sensor_data_table():
@@ -17,10 +7,13 @@ def create_sensor_data_table():
 
     create_table_query = """
     CREATE TABLE IF NOT EXISTS SensorData (
+        id TEXT PRIMARY KEY,
         average_fuel_level REAL,
         average_power_level REAL,
-        start_timestamp TEXT,
-        end_timestamp TEXT,
+        start_fuel_timestamp TEXT,
+        end_fuel_timestamp TEXT,
+        start_power_timestamp TEXT,
+        end_power_timestamp TEXT,
         status TEXT
     );
     """
