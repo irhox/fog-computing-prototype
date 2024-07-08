@@ -26,9 +26,10 @@ class DatabaseManager:
 
     def add_aggregated_data_record(self, fuel_data_array: [], power_data_array:[], status):
         aggregated_data = AggregatedData(fuel_data_array, power_data_array, status)
-        self.cur.execute("INSERT INTO public.aggregated_data(average_fuel_level, average_power_level, start_fuel_timestamp, end_fuel_timestamp, start_power_timestamp, end_power_timestamp, status) "
-        "VALUES(%(fuel)s, %(power)s, %(startf)s, %(endf)s, %(startp)s, %(endp)s, %(status)s);",
+        self.cur.execute("INSERT INTO public.aggregated_data(id, average_fuel_level, average_power_level, start_fuel_timestamp, end_fuel_timestamp, start_power_timestamp, end_power_timestamp, status) "
+        "VALUES(%(id)s, %(fuel)s, %(power)s, %(startf)s, %(endf)s, %(startp)s, %(endp)s, %(status)s);",
         {
+            "id": aggregated_data.id,
             "fuel": aggregated_data.average_fuel_level,
             "power": aggregated_data.average_power_level,
             "startf": aggregated_data.start_fuel_timestamp,

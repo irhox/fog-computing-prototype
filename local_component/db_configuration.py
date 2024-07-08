@@ -23,6 +23,7 @@ cursor.execute("CREATE TABLE IF NOT EXISTS public.power_data ( "
                ");")
 
 cursor.execute("CREATE TABLE IF NOT EXISTS public.aggregated_data ( "
+               "id VARCHAR(255) PRIMARY KEY,"
                "average_fuel_level NUMERIC, "
                "average_power_level NUMERIC, "
                "start_fuel_timestamp TIMESTAMP, "
