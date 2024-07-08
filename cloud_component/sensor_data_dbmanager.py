@@ -27,10 +27,14 @@ def insert_sensor_data(sensor_data: SensorData):
         cursor.execute(insert_query, (sensor_data.id, average_fuel_level, average_power_level,
                                       start_fuel_timestamp, end_fuel_timestamp,
                                       start_power_timestamp, end_power_timestamp,
-                                      sensor_data.status))
+                                      "SAVED"))
 
         conn.commit()
         conn.close()
         print("Data inserted successfully.")
+        return sensor_data.id, sensor_data.status
     except Exception as e:
         print(f"Error inserting data into database: {e}")
+        return None
+    finally:
+        conn.close()

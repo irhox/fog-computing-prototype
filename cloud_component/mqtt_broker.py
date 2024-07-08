@@ -1,33 +1,54 @@
+import logging
 import jsonpickle
 from cloud_component.sensor_data_dbmanager import insert_sensor_data
 from cloud_component.sensor_data import SensorData
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+MQTT_TOPIC_DATA = "power-station/data"
+MQTT_TOPIC_STATUS_UPDATE = "power-station/data/status-update"
+
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
-        print("Connected successfully")
-        client.subscribe("power-station/data")
+        logger.info("Connected successfully")
+        client.subscribe(MQTT_TOPIC_DATA)
     else:
-        print(f"Connection failed with code {rc}")
+        logger.error(f"Connection failed with code {rc}")
+
+
+def handle_sensor_data(client, data):
+    try:
+        sensor_data = SensorData(
+            id=data['id'],
+            average_fuel_level=data['average_fuel_level'],
+            average_power_level=data['average_power_level'],
+            start_fuel_timestamp=data['start_fuel_timestamp'],
+            end_fuel_timestamp=data['end_fuel_timestamp'],
+            start_power_timestamp=data['start_power_timestamp'],
+            end_power_timestamp=data['end_power_timestamp'],
+            status=data['status']
+        )
+        result = insert_sensor_data(sensor_data)
+        if result:
+            sensor_id, updated_status = result
+            status_message = jsonpickle.encode({'id': sensor_id, 'status': updated_status})
+            client.publish(MQTT_TOPIC_STATUS_UPDATE, status_message)
+    except Exception as e:
+        logger.error(f"Error processing data: {e}")
 
 
 def on_message(client, userdata, msg):
-    print(f"Received message from topic {msg.topic}")
+    logger.info(f"Received message from topic {msg.topic}")
     payload = msg.payload.decode()
-    # print(f"Payload: {payload}")
 
-    if msg.topic == "power-station/data":
-        aggregated_data = jsonpickle.decode(payload)
-        for data in aggregated_data:
-            # print("Aggregated data received from local component:{}\n".format(data))
-            sensor_data = SensorData(
-                id=data['id'],
-                average_fuel_level=data['average_fuel_level'],
-                average_power_level=data['average_power_level'],
-                start_fuel_timestamp=data['start_fuel_timestamp'],
-                end_fuel_timestamp=data['end_fuel_timestamp'],
-                start_power_timestamp=data['start_power_timestamp'],
-                end_power_timestamp=data['end_power_timestamp'],
-                status=data['status']
-            )
-            insert_sensor_data(sensor_data)
+    if msg.topic == MQTT_TOPIC_DATA:
+        try:
+            aggregated_data = jsonpickle.decode(payload)
+            for data in aggregated_data:
+                handle_sensor_data(client, data)
+        except jsonpickle.JSONDecodeError as e:
+            logger.error(f"JSONDecodeError: {e}. Payload: {payload}")
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
