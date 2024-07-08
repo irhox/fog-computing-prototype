@@ -52,7 +52,7 @@ def send_aggregated_data(client):
     not_sent_aggregated_data = []
 
     if len(not_sent_data) != 0:
-        not_sent_aggregated_data = [AggregatedData(aggregated_data_array=data) for data in not_sent_data]
+        not_sent_aggregated_data = [AggregatedData(aggregated_data_array=data).__dict__ for data in not_sent_data]
         if len(fuel_data_array) == 0 and len(power_data_array) == 0:
             client.publish("power-station/data", jsonpickle.encode(not_sent_aggregated_data))
 
@@ -61,7 +61,7 @@ def send_aggregated_data(client):
         power_data_array = [PowerData(data) for data in power_data_array]
 
         new_aggregated_data = AggregatedData(fuel_data_array, power_data_array, "CREATED")
-        not_sent_aggregated_data.append(new_aggregated_data)
+        not_sent_aggregated_data.append(new_aggregated_data.__dict__)
         client.publish("power-station/data", jsonpickle.encode(not_sent_aggregated_data))
 
         dbObj.add_aggregated_data_record(fuel_data_array, power_data_array, "CREATED")
