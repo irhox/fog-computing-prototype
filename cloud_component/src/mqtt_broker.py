@@ -17,6 +17,7 @@ def on_connect(client, userdata, flags, rc):
     else:
         logger.error(f"Connection failed with code {rc}")
 
+
 def on_subscribe(client, userdata, mid, granted_qos):
     pass
 

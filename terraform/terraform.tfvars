@@ -1,0 +1,1 @@
+gcp_project_id = "fog-proto"
