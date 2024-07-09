@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 def insert_sensor_data(sensor_data: SensorData):
-    try:
+    try :
         conn = sqlite3.connect('sensordata.db')
         cursor = conn.cursor()
 
@@ -35,6 +35,8 @@ def insert_sensor_data(sensor_data: SensorData):
         return sensor_data.id, sensor_data.status
     except Exception as e:
         print(f"Error inserting data into database: {e}")
+        if str(e).strip() == "UNIQUE constraint failed: SensorData.id":
+            return sensor_data.id, None
         return None
     finally:
         conn.close()

@@ -24,8 +24,7 @@ class DatabaseManager:
         self.cur.execute("INSERT INTO public.fuel_data(fuel_level) VALUES (%(fuel)s);", {"fuel": arg})
         self.conn.commit()
 
-    def add_aggregated_data_record(self, fuel_data_array: [], power_data_array:[], status):
-        aggregated_data = AggregatedData(fuel_data_array, power_data_array, status)
+    def add_aggregated_data_record(self, aggregated_data: AggregatedData):
         self.cur.execute("INSERT INTO public.aggregated_data(id, average_fuel_level, average_power_level, start_fuel_timestamp, end_fuel_timestamp, start_power_timestamp, end_power_timestamp, status) "
         "VALUES(%(id)s, %(fuel)s, %(power)s, %(startf)s, %(endf)s, %(startp)s, %(endp)s, %(status)s);",
         {

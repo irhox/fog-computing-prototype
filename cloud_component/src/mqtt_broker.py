@@ -17,6 +17,9 @@ def on_connect(client, userdata, flags, rc):
     else:
         logger.error(f"Connection failed with code {rc}")
 
+def on_subscribe(client, userdata, mid, granted_qos):
+    pass
+
 
 def handle_sensor_data(client, data):
     try:
@@ -33,7 +36,10 @@ def handle_sensor_data(client, data):
         result = insert_sensor_data(sensor_data)
         if result:
             sensor_id, updated_status = result
-            status_message = jsonpickle.encode({'id': sensor_id, 'status': updated_status})
+            if not updated_status:
+                status_message = jsonpickle.encode({'id': sensor_id})
+            else:
+                status_message = jsonpickle.encode({'id': sensor_id, 'status': updated_status})
             client.publish(MQTT_TOPIC_STATUS_UPDATE, status_message)
     except Exception as e:
         logger.error(f"Error processing data: {e}")
