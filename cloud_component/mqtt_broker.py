@@ -1,7 +1,7 @@
 import logging
 import jsonpickle
-from cloud_component.sensor_data_dbmanager import insert_sensor_data
-from cloud_component.sensor_data import SensorData
+from sensor_data_dbmanager import insert_sensor_data
+from sensor_data import SensorData
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,6 +16,9 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe(MQTT_TOPIC_DATA)
     else:
         logger.error(f"Connection failed with code {rc}")
+
+def on_subscribe(client, userdata, mid, granted_qos):
+    pass
 
 
 def handle_sensor_data(client, data):
@@ -33,7 +36,10 @@ def handle_sensor_data(client, data):
         result = insert_sensor_data(sensor_data)
         if result:
             sensor_id, updated_status = result
-            status_message = jsonpickle.encode({'id': sensor_id, 'status': updated_status})
+            if not updated_status:
+                status_message = jsonpickle.encode({'id': sensor_id})
+            else:
+                status_message = jsonpickle.encode({'id': sensor_id, 'status': updated_status})
             client.publish(MQTT_TOPIC_STATUS_UPDATE, status_message)
     except Exception as e:
         logger.error(f"Error processing data: {e}")

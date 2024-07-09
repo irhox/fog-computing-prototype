@@ -6,12 +6,15 @@ import jsonpickle
 
 
 def on_message(client, userdata, msg):
-    payload = str(msg.payload.decode())
-    print("TOPIC: ", msg.topic, " PAYLOAD: ", payload)
-    processed_data = payload.split(':', 1)[1]
-    processed_data = processed_data.replace('}', '')
-    processed_data = float(processed_data)
-    message_handler(msg.topic, processed_data)
+
+    if msg.topic == "fuel" or msg.topic == "power":
+        sensor_message_handler(msg.topic, msg.payload)
+
+    elif msg.topic == "power-station/data":
+        print("TOPIC: ", msg.topic, " AGGREGATED: ", str(jsonpickle.decode(msg.payload)))
+
+    elif msg.topic == "power-station/data/status-update":
+        cloud_message_handler(msg.topic, msg.payload)
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -19,6 +22,7 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe("power")
         client.subscribe("fuel")
         client.subscribe("power-station/data")
+        client.subscribe("power-station/data/status-update")
     else:
         print("Bad connection Returned code=", rc)
 
@@ -26,16 +30,31 @@ def on_subscribe(client, userdata, mid, granted_qos):
     pass
 
 
-def message_handler(topic, data:float):
+def sensor_message_handler(topic, payload):
     dbObj = DatabaseManager()
+    payload_str = str(payload.decode())
+    print("TOPIC: ", topic, " PAYLOAD: ", payload_str)
+    processed_data = payload_str.split(':', 1)[1]
+    processed_data = processed_data.replace('}', '')
+    processed_data = float(processed_data)
 
     if topic == "power":
-        dbObj.add_power_record(data)
+        dbObj.add_power_record(processed_data)
         print("Power data is successfully created.")
 
     elif topic == "fuel":
-        dbObj.add_fuel_record(data)
+        dbObj.add_fuel_record(processed_data)
         print("Fuel Data is successfully created.")
+
+    del dbObj
+
+def cloud_message_handler(topic, payload):
+    dbObj = DatabaseManager()
+    if topic == "power-station/data/status-update":
+        payload_json = jsonpickle.decode(payload)
+        dbObj.cur.execute("DELETE FROM public.aggregated_data WHERE id LIKE %(id)s", {"id": payload_json["id"]})
+        dbObj.conn.commit()
+        print("Deleted data with id: ", payload_json["id"], " after success message from cloud component")
 
     del dbObj
 
@@ -64,7 +83,7 @@ def send_aggregated_data(client):
         not_sent_aggregated_data.append(new_aggregated_data.__dict__)
         client.publish("power-station/data", jsonpickle.encode(not_sent_aggregated_data))
 
-        dbObj.add_aggregated_data_record(fuel_data_array, power_data_array, "CREATED")
+        dbObj.add_aggregated_data_record(new_aggregated_data)
         dbObj.cur.execute("DELETE FROM public.fuel_data WHERE timestamp <= %s", (new_aggregated_data.end_fuel_timestamp,))
         dbObj.cur.execute("DELETE FROM public.power_data WHERE timestamp <= %s", (new_aggregated_data.end_power_timestamp,))
         dbObj.conn.commit()

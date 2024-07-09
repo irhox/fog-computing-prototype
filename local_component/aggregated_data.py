@@ -21,7 +21,7 @@ class AggregatedData:
             status="CREATED",
             aggregated_data_array=None
     ):
-        if fuel_data_array is not None and power_data_array is not None:
+        if fuel_data_array is not None and power_data_array is not None and aggregated_data_array is None:
             self.id = str(uuid.uuid4())
             self.average_fuel_level = round(np.mean([d.fuel_level for d in fuel_data_array]), 2)
             self.average_power_level = round(np.mean([d.power_in_volts for d in power_data_array]), 2)
@@ -32,7 +32,7 @@ class AggregatedData:
             self.start_power_timestamp = min(power_data_array, key=lambda x: x.timestamp).timestamp
             self.end_power_timestamp = max(power_data_array, key=lambda x: x.timestamp).timestamp
             self.status = status
-        elif aggregated_data_array is not None:
+        elif aggregated_data_array is not None and fuel_data_array is None and power_data_array is None:
             self.id = aggregated_data_array[0]
             self.average_fuel_level = aggregated_data_array[1]
             self.average_power_level = aggregated_data_array[2]
