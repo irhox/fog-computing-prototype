@@ -21,7 +21,3 @@ def create_sensor_data_table():
     cursor.execute(create_table_query)
     conn.commit()
     conn.close()
-
-
-if __name__ == "__main__":
-    create_sensor_data_table()
