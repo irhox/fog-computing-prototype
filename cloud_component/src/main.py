@@ -1,7 +1,7 @@
 import paho.mqtt.client as mqtt
 
-from cloud_component.mqtt_broker import on_connect, on_message
-from cloud_component.sensor_data_dbconfig import create_sensor_data_table
+from mqtt_broker import on_connect, on_message
+from sensor_data_dbconfig import create_sensor_data_table
 
 MQTT_BROKER_HOST = "mqtt.eclipseprojects.io"
 MQTT_BROKER_PORT = 1883

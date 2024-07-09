@@ -1,7 +1,7 @@
 import logging
 import jsonpickle
-from cloud_component.sensor_data_dbmanager import insert_sensor_data
-from cloud_component.sensor_data import SensorData
+from sensor_data_dbmanager import insert_sensor_data
+from sensor_data import SensorData
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

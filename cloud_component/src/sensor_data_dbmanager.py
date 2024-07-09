@@ -1,5 +1,5 @@
 import sqlite3
-from cloud_component.sensor_data import SensorData
+from sensor_data import SensorData
 from datetime import datetime
 
 
