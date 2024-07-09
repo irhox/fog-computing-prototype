@@ -7,7 +7,9 @@ import jsonpickle
 
 MQTT_DATA_PUB_TOPIC = "power-station/data"
 MQTT_FUEL_DATA_SUB_TOPIC = "fuel"
+MQTT_FUEL_CHANGE_PUB_TOPIC = "fuel-level-change"
 MQTT_POWER_DATA_SUB_TOPIC = "power"
+MQTT_POWER_CHANGE_PUB_TOPIC = "power-level-change"
 MQTT_DATA_CLOUD_SUB_TOPIC = "power-station/data/status-update"
 
 def on_message(client, userdata, msg):
@@ -16,7 +18,7 @@ def on_message(client, userdata, msg):
         sensor_message_handler(msg.topic, msg.payload)
 
     elif msg.topic == MQTT_DATA_CLOUD_SUB_TOPIC:
-        cloud_message_handler(msg.topic, msg.payload)
+        cloud_message_handler(client, msg.topic, msg.payload)
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -49,13 +51,20 @@ def sensor_message_handler(topic, payload):
 
     del dbObj
 
-def cloud_message_handler(topic, payload):
+def cloud_message_handler(client, topic, payload):
     dbObj = DatabaseManager()
     if topic == MQTT_DATA_CLOUD_SUB_TOPIC:
         payload_json = jsonpickle.decode(payload)
         dbObj.cur.execute("DELETE FROM public.aggregated_data WHERE id LIKE %(id)s", {"id": payload_json["id"]})
         dbObj.conn.commit()
         print("Deleted data with id: ", payload_json["id"], " after success message from cloud component")
+        if payload_json["fuel_math_expression"]:
+            client.publish(MQTT_FUEL_CHANGE_PUB_TOPIC, jsonpickle.encode({"math_expression": payload_json["fuel_math_expression"]}))
+            print("Sent fuel change message!")
+
+        if payload_json["power_math_expression"]:
+            client.publish(MQTT_POWER_CHANGE_PUB_TOPIC, jsonpickle.encode({"math_expression": payload_json["power_math_expression"]}))
+            print("Sent power change message!")
 
     del dbObj
 
