@@ -5,24 +5,25 @@ from power_data import PowerData
 import jsonpickle
 
 
+MQTT_DATA_PUB_TOPIC = "power-station/data"
+MQTT_FUEL_DATA_SUB_TOPIC = "fuel"
+MQTT_POWER_DATA_SUB_TOPIC = "power"
+MQTT_DATA_CLOUD_SUB_TOPIC = "power-station/data/status-update"
+
 def on_message(client, userdata, msg):
 
-    if msg.topic == "fuel" or msg.topic == "power":
+    if msg.topic == MQTT_FUEL_DATA_SUB_TOPIC or msg.topic == MQTT_POWER_DATA_SUB_TOPIC:
         sensor_message_handler(msg.topic, msg.payload)
 
-    elif msg.topic == "power-station/data":
-        print("TOPIC: ", msg.topic, " AGGREGATED: ", str(jsonpickle.decode(msg.payload)))
-
-    elif msg.topic == "power-station/data/status-update":
+    elif msg.topic == MQTT_DATA_CLOUD_SUB_TOPIC:
         cloud_message_handler(msg.topic, msg.payload)
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
         print("connected OK Returned code=", rc)
-        client.subscribe("power")
-        client.subscribe("fuel")
-        client.subscribe("power-station/data")
-        client.subscribe("power-station/data/status-update")
+        client.subscribe(MQTT_POWER_DATA_SUB_TOPIC)
+        client.subscribe(MQTT_FUEL_DATA_SUB_TOPIC)
+        client.subscribe(MQTT_DATA_CLOUD_SUB_TOPIC)
     else:
         print("Bad connection Returned code=", rc)
 
@@ -38,11 +39,11 @@ def sensor_message_handler(topic, payload):
     processed_data = processed_data.replace('}', '')
     processed_data = float(processed_data)
 
-    if topic == "power":
+    if topic == MQTT_POWER_DATA_SUB_TOPIC:
         dbObj.add_power_record(processed_data)
         print("Power data is successfully created.")
 
-    elif topic == "fuel":
+    elif topic == MQTT_FUEL_DATA_SUB_TOPIC:
         dbObj.add_fuel_record(processed_data)
         print("Fuel Data is successfully created.")
 
@@ -50,7 +51,7 @@ def sensor_message_handler(topic, payload):
 
 def cloud_message_handler(topic, payload):
     dbObj = DatabaseManager()
-    if topic == "power-station/data/status-update":
+    if topic == MQTT_DATA_CLOUD_SUB_TOPIC:
         payload_json = jsonpickle.decode(payload)
         dbObj.cur.execute("DELETE FROM public.aggregated_data WHERE id LIKE %(id)s", {"id": payload_json["id"]})
         dbObj.conn.commit()
@@ -73,7 +74,7 @@ def send_aggregated_data(client):
     if len(not_sent_data) != 0:
         not_sent_aggregated_data = [AggregatedData(aggregated_data_array=data).__dict__ for data in not_sent_data]
         if len(fuel_data_array) == 0 and len(power_data_array) == 0:
-            client.publish("power-station/data", jsonpickle.encode(not_sent_aggregated_data))
+            client.publish(MQTT_DATA_PUB_TOPIC, jsonpickle.encode(not_sent_aggregated_data))
 
     if len(fuel_data_array) != 0 and len(power_data_array) != 0:
         fuel_data_array = [FuelData(data) for data in fuel_data_array]
@@ -81,7 +82,7 @@ def send_aggregated_data(client):
 
         new_aggregated_data = AggregatedData(fuel_data_array, power_data_array, "CREATED")
         not_sent_aggregated_data.append(new_aggregated_data.__dict__)
-        client.publish("power-station/data", jsonpickle.encode(not_sent_aggregated_data))
+        client.publish(MQTT_DATA_PUB_TOPIC, jsonpickle.encode(not_sent_aggregated_data))
 
         dbObj.add_aggregated_data_record(new_aggregated_data)
         dbObj.cur.execute("DELETE FROM public.fuel_data WHERE timestamp <= %s", (new_aggregated_data.end_fuel_timestamp,))
