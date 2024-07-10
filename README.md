@@ -1,3 +1,10 @@
+# Fog Computing Prototype
+
+This project was created as part of a master course at the TU Berlin university.
+Its purpose is to showcase an application that overcomes fog specific challenges.
+
+More detailed information is found in the [DOCUMENTATION.md](./DOCUMENTATION.md) file.
+
 ## Getting Started
 
 1. Install all the dependencies using the requirements.txt file that is placed on the root folder of the project.
@@ -44,10 +51,10 @@ Power data is successfully created.
 1. Create a new Google Cloud project;
 2. Activate Compute Engine API;
 3. Change the value of the `gcp_project_id` variable
-   in  [fog-computing-prototype/terraform/terraform.tfvars](https://github.com/irhox/fog-computing-prototype/blob/main/terraform/terraform.tfvars)
+   in  [fog-computing-prototype/terraform/terraform.tfvars](./terraform/terraform.tfvars)
    to the id of your GCP project;
 4. Inside of
-   the [fog-computing-prototype/terraform/](https://github.com/irhox/fog-computing-prototype/blob/main/terraform/terraform.tfvars)
+   the [fog-computing-prototype/terraform/](./terraform/)
    folder execute the following commands:
     - `gcloud auth login`
     - `terraform init`
