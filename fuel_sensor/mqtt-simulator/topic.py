@@ -6,7 +6,10 @@ from abc import ABC, abstractmethod
 import paho.mqtt.client as mqtt
 from client_settings import ClientSettings
 from expression_evaluator import ExpressionEvaluator
+import jsonpickle
 
+
+MQTT_FUEL_CHANGE_PUB_TOPIC = "fuel-level-change"
 
 class Topic(ABC):
     def __init__(self, broker_url: str, broker_port: int, broker_protocol: int, topic_url: str,
@@ -39,8 +42,11 @@ class Topic(ABC):
             self.client = mqtt.Client(self.topic_url, protocol=self.broker_protocol,
                                       clean_session=self.topic_client_settings.clean)
         self.client.on_publish = self.on_publish
+        self.client.on_subscribe = self.on_subscribe
+        self.client.on_message = self.on_message
         self.client.connect(self.broker_url, self.broker_port)
         self.client.loop_start()
+        self.client.subscribe(MQTT_FUEL_CHANGE_PUB_TOPIC)
 
     def disconnect(self):
         self.loop = False
@@ -54,11 +60,42 @@ class Topic(ABC):
             self.old_payload = payload
             self.client.publish(topic=self.topic_url, payload=json.dumps(payload), qos=self.topic_client_settings.qos,
                                 retain=self.topic_client_settings.retain)
+
             time.sleep(self.topic_client_settings.time_interval)
 
     def on_publish(self, client, userdata, result):
         print(f'[{time.strftime("%H:%M:%S")}] Data published on: {self.topic_url}')
         print(f'Payload: {json.dumps(self.old_payload)}')
+
+    def on_subscribe(self, userdata, mid, granted_qos):
+        pass
+
+    def on_message(self, userdata, msg):
+        print("STEP1")
+        if msg.topic == MQTT_FUEL_CHANGE_PUB_TOPIC:
+            print("STEP2")
+            json_payload = jsonpickle.decode(msg.payload)
+            print("STEP3")
+            new_expression = json_payload["math_expression"]
+            print("STEP4")
+            with open("../config/settings.json", "r") as settings_file:
+                print("STEP5")
+                settings = json.load(settings_file)
+                config = settings["TOPICS"][0]
+                data = config["DATA"][0]
+                print("STEP6")
+                if "MATH_EXPRESSION" in data:
+                    data["MATH_EXPRESSION"] = new_expression
+                    config["DATA"][0] = data
+                    settings["TOPICS"][0] = config
+
+                new_settings = json.dumps(settings)
+            print("STEP7")
+            with open("../config/settings.json", "w") as settings_file:
+                json.dump(new_settings, settings_file)
+                print(f"New settings saved to setting.json file with math_expression: {json_payload['math_expression']}")
+
+
 
     def generate_payload(self):
         payload = {}
