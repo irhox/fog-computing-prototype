@@ -32,11 +32,23 @@ def insert_sensor_data(sensor_data: SensorData):
         conn.commit()
         conn.close()
         print("Data inserted successfully.")
-        return sensor_data.id, sensor_data.status
+        fuel_math_expression = None
+        power_math_expression = None
+        if average_fuel_level < 15:
+            fuel_math_expression = "120 * (math.sin(x) + 1) / 2 + 30"
+        elif average_fuel_level > 100:
+            fuel_math_expression = "90 * (math.sin(x) + 1) / 2 + 10"
+
+        if average_power_level < 5500:
+            power_math_expression = "15000 * (math.sin(x) + 1) / 2 + 10000"
+        elif average_power_level > 20000:
+            power_math_expression = "10000 * (math.sin(x) + 1) / 2 + 5000"
+
+        return sensor_data.id, sensor_data.status, fuel_math_expression, power_math_expression
     except Exception as e:
         print(f"Error inserting data into database: {e}")
         if str(e).strip() == "UNIQUE constraint failed: SensorData.id":
-            return sensor_data.id, None
+            return sensor_data.id, None, None, None
         return None
     finally:
         conn.close()

@@ -36,11 +36,11 @@ def handle_sensor_data(client, data):
         )
         result = insert_sensor_data(sensor_data)
         if result:
-            sensor_id, updated_status = result
+            sensor_id, updated_status, fuel_math_expression, power_math_expression = result
             if not updated_status:
                 status_message = jsonpickle.encode({'id': sensor_id})
             else:
-                status_message = jsonpickle.encode({'id': sensor_id, 'status': updated_status})
+                status_message = jsonpickle.encode({'id': sensor_id, 'status': updated_status, 'fuel_math_expression': fuel_math_expression, 'power_math_expression': power_math_expression})
             client.publish(MQTT_TOPIC_STATUS_UPDATE, status_message)
             logger.info(f"Message {sensor_id} is successfully saved in the database")
     except Exception as e:
