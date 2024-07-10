@@ -42,6 +42,7 @@ def handle_sensor_data(client, data):
             else:
                 status_message = jsonpickle.encode({'id': sensor_id, 'status': updated_status})
             client.publish(MQTT_TOPIC_STATUS_UPDATE, status_message)
+            logger.info(f"Message {sensor_id} is successfully saved in the database")
     except Exception as e:
         logger.error(f"Error processing data: {e}")
 
