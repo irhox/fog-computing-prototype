@@ -44,9 +44,10 @@ class Topic(ABC):
         self.client.on_publish = self.on_publish
         self.client.on_subscribe = self.on_subscribe
         self.client.on_message = self.on_message
+        self.client.on_connect = self.on_connect
         self.client.connect(self.broker_url, self.broker_port)
-        self.client.loop_start()
         self.client.subscribe(MQTT_FUEL_CHANGE_PUB_TOPIC)
+        self.client.loop_start()
 
     def disconnect(self):
         self.loop = False
@@ -62,6 +63,10 @@ class Topic(ABC):
                                 retain=self.topic_client_settings.retain)
 
             time.sleep(self.topic_client_settings.time_interval)
+
+    def on_connect(self, client, userdata, flags, rc):
+        if rc == 0:
+            self.client.subscribe(MQTT_FUEL_CHANGE_PUB_TOPIC)
 
     def on_publish(self, client, userdata, result):
         print(f'[{time.strftime("%H:%M:%S")}] Data published on: {self.topic_url}')
